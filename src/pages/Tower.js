@@ -21,7 +21,8 @@ class Tower extends React.Component{
             doRouting: false,
             target: null,
             useOrthoCam: true,
-            camDestination: ""
+            camDestination: "",
+            verbose: false
         }
         
         //Core Three.js objects
@@ -337,18 +338,23 @@ class Tower extends React.Component{
         this.scene.background = new THREE.Color( 'skyblue');
         
         //Loaded Data
-        let BuildingGroup = new THREE.Group()
+        let buildingGroup = new THREE.Group()
+        let floor1Group = new THREE.Group()
+        let floor2Group = new THREE.Group()
+        let floor3Group = new THREE.Group()
+        let floor4Group = new THREE.Group()
         const demoMaterial = new THREE.MeshStandardMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
         const demoMaterial1 = new THREE.MeshStandardMaterial( {color: 0xff0000, side: THREE.DoubleSide} );
         const demoMaterial2 = new THREE.MeshStandardMaterial( {color: 0x00ff00, side: THREE.DoubleSide} );
         const demoMaterial3 = new THREE.MeshStandardMaterial( {color: 0x0000ff, side: THREE.DoubleSide} );
-        const floor1 = doModelLoading('/models/floor1.glb',demoMaterial, gltfLoader, BuildingGroup)
-        const floor2 = doModelLoading('/models/floor2.glb',demoMaterial1, gltfLoader, BuildingGroup)
-        const floor3 = doModelLoading('/models/floor3.glb',demoMaterial2, gltfLoader, BuildingGroup)
-        const floor4 = doModelLoading('/models/floor4.glb',demoMaterial3, gltfLoader, BuildingGroup)
-
-        BuildingGroup.rotation.y = Math.PI / 4;
-        this.scene.add(BuildingGroup)
+        doModelLoading('/models/floor1.glb',demoMaterial, gltfLoader, floor1Group)
+        doModelLoading('/models/floor2.glb',demoMaterial1, gltfLoader, floor2Group)
+        doModelLoading('/models/floor3.glb',demoMaterial2, gltfLoader, floor3Group)
+        doModelLoading('/models/floor4.glb',demoMaterial3, gltfLoader, floor4Group)
+        
+        buildingGroup.add(floor1Group,floor2Group,floor3Group,floor4Group)
+        buildingGroup.rotation.y = Math.PI / 4;
+        this.scene.add(buildingGroup)
 
         //Lights
         const lightColors = {
@@ -392,8 +398,24 @@ class Tower extends React.Component{
             console.log(this.controls)
         }
 
+        debugObject.toggleControls = () =>{
+            if(this.controls){
+                this.controls.enabled = !this.controls.enabled
+            } else {
+                console.log("controls not found")
+            }
+        }
+        debugObject.toggleVerbose = () =>{
+            this.setState({verbose: !this.state.verbose})
+        }
+
+        var debugGUI = gui.addFolder("Debug")
+        debugGUI.add(debugObject, 'toggleVerbose')
+
+        //Camera GUI
         var cameraGUI = gui.addFolder("Camera")
         cameraGUI.add(debugObject, 'logCamera')
+        cameraGUI.add(debugObject, 'toggleControls')
 
         //Lights GUI
         var lightsGUI = gui.addFolder("Lighting")
@@ -452,10 +474,6 @@ class Tower extends React.Component{
 
             this.camera.updateProjectionMatrix()
             this.scene.add(this.camera)
-
-            // this.camHelper = new THREE.CameraHelper( this.camera );
-            // this.scene.add(this.camHelper)
-
         }
 
         // Renderer
@@ -474,6 +492,7 @@ class Tower extends React.Component{
                 orthographicCameraSettings.floor4.targety,
                 orthographicCameraSettings.floor4.targetz)
             this.controls.enableDamping = true    
+            this.controls.enabled = false
         }
 
         // Controls
@@ -566,26 +585,41 @@ class Tower extends React.Component{
 
         function changeScene (cam, controls, destination){
             console.log("changescene: ", destination);
+            const origin = new THREE.Vector3(0,0,0)
+            const dest = new THREE.Vector3(0,100,0)
             switch(destination){
                 case "contact":
                     shiftCamera(orthographicCameraSettings.floor1, cam, controls)
+                    moveFloor(floor4Group, dest)
+                    moveFloor(floor3Group, dest)
+                    moveFloor(floor2Group, dest)
                     break;
                 case "photos":
                     shiftCamera(orthographicCameraSettings.floor2, cam, controls)
-                    // const dest = new THREE.Vector3(0,100,0)
-                    // moveFloor(floor4, dest)
+                    moveFloor(floor4Group, dest)
+                    moveFloor(floor3Group, dest)
+                    moveFloor(floor2Group, origin)
                     break;
                 case "gallery":
                     shiftCamera(orthographicCameraSettings.floor3, cam, controls)
+                    moveFloor(floor4Group, dest)
+                    moveFloor(floor3Group, origin)
+                    moveFloor(floor2Group, origin)
                     break;
                 case "about":
                     shiftCamera(orthographicCameraSettings.floor4, cam, controls)
+                    moveFloor(floor4Group, origin)
+                    moveFloor(floor3Group, origin)
+                    moveFloor(floor2Group, origin)
                     break;
                 default:
                     shiftCamera(orthographicCameraSettings.floor4, cam, controls)
+                    moveFloor(floor4Group, origin)
+                    moveFloor(floor3Group, origin)
+                    moveFloor(floor2Group, origin)
                     break;
             }
-            cam.updateProjectionMatrix();
+            // cam.updateProjectionMatrix();
         }
 
         const clock = new THREE.Clock()
@@ -621,10 +655,6 @@ class Tower extends React.Component{
                 for(const intersect of intersects) {
                     intersect.object.material.color.set('#0000ff')
                 }
-            }
-            if(this.camHelper != null){
-                this.camHelper.update()
-                this.camHelper.visible = true;
             }
             
             if(this.state.camDestination !== ""){
