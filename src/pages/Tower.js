@@ -11,6 +11,8 @@ import { Water } from 'three/examples/jsm/objects/Water.js';
 import ProgressBar from '../components/ProgressBar/ProgressBar';
 import ScrollController from '../components/ScrollController/ScrollController';
 
+import {scenes, perspecitveCameraSettings, sceneSettings} from '../data/TowerSceneConfig'
+
 class Tower extends React.Component{
     constructor(props){
         super(props)
@@ -21,7 +23,6 @@ class Tower extends React.Component{
             progressText: "",
             doRouting: false,
             target: null,
-            useOrthoCam: false,
             camDestination: "",
             verbose: false,
             currentFloor: "roof",
@@ -65,227 +66,16 @@ class Tower extends React.Component{
         const mouse = new THREE.Vector2()
         const clickableObjects = []
         let currentIntersect = null
-        
         const sizes = {
             width: window.innerWidth,
             height: window.innerHeight,
             aspect: window.innerWidth/window.innerHeight
         }
 
-        const params = {
+        const debugParams = {
             focusx: 0,
             focusy: 30,
             focusz: 0
-        }
-
-        const rotationSpeed = .0001
-
-        //Camera settings
-        const scenes = {
-            Floor3_Clickable_Acomplices:{
-                cameraPositionX: 3.043798085974042,
-                cameraPositionY: 35.28954205740364,
-                cameraPositionZ: -12.525289428836645,
-                fov: 45,
-                targetx: 0,
-                targety: 34,
-                targetz: 2
-            },
-            Floor3_Clickable_BlueHaze:{
-                cameraPositionX: 2.471026592252894,
-                cameraPositionY: 35.37781500055371,
-                cameraPositionZ: 2.118975912395376,
-                fov: 45,
-                targetx: 7.772,
-                targety: 34.934,
-                targetz: 7.454
-            },
-            Floor3_Clickable_Graduation:{
-                cameraPositionX: -1.927542198269916,
-                cameraPositionY: 34.88953982870003,
-                cameraPositionZ: -1.828419163495437,
-                fov: 45,
-                targetx: -8.262,
-                targety: 35.176,
-                targetz: -7.504
-            },
-            Floor3_Clickable_HiddenWorlds:{
-                cameraPositionX: -11.62155483418708,
-                cameraPositionY: 35.38800281290143,
-                cameraPositionZ: -7.215452779154688,
-                fov: 45,
-                targetx: 13.396,
-                targety: 33.449,
-                targetz: 2
-            },
-            Floor3_Clickable_Home:{
-                cameraPositionX: 9.61799105794982,
-                cameraPositionY: 35.95111485872807,
-                cameraPositionZ: 8.122425534400904,
-                fov: 45,
-                targetx: 0,
-                targety: 34,
-                targetz: 2
-            },
-            Floor3_Clickable_Lombard:{
-                cameraPositionX: 1.2722498915882987,
-                cameraPositionY: 35.48618818187341,
-                cameraPositionZ: -4.924293617077119,
-                fov: 45,
-                targetx: 10.579,
-                targety: 34.934,
-                targetz: -4.177
-            },
-            Floor3_Clickable_MixedMessages:{
-                cameraPositionX: 11.202409523006576,
-                cameraPositionY: 36.10464738454277,
-                cameraPositionZ: -1.37192947483451,
-                fov: 45,
-                targetx: 1.512,
-                targety: 33.746,
-                targetz: -4.426
-            },
-            Floor3_Clickable_WorldsEdge:{
-                cameraPositionX: 0.12869333488445744,
-                cameraPositionY: 35.15604075526848,
-                cameraPositionZ: -2.3206280947602824,
-                fov: 45,
-                targetx: 1.368,
-                targety: 35.176,
-                targetz: -11.233
-            },
-        }
-        const perspecitveCameraSettings = {
-            floor1:{
-                cameraPositionX: 20,
-                cameraPositionY: 24,
-                cameraPositionZ: 20,
-                fov: 45,
-                targetx: 0,
-                targety: 18,
-                targetz: 2
-            },
-            floor2:{
-                cameraPositionX: 20,
-                cameraPositionY: 32,
-                cameraPositionZ: 20,
-                fov: 45,
-                targetx: 0,
-                targety: 26,
-                targetz: 2
-            },
-            floor3:{
-                cameraPositionX: 20,
-                cameraPositionY: 40,
-                cameraPositionZ: 20,
-                fov: 45,
-                targetx: 0,
-                targety: 34,
-                targetz: 2
-            },
-            floor4:{
-                cameraPositionX: 20,
-                cameraPositionY: 48,
-                cameraPositionZ: 20,
-                fov: 45,
-                targetx: 0,
-                targety: 42,
-                targetz: 2
-            },
-            roof:{
-                cameraPositionX: 20,
-                cameraPositionY: 56,
-                cameraPositionZ: 20,
-                fov: 45,
-                targetx: 0,
-                targety: 50,
-                targetz: 2
-            } 
-        }
-
-
-        const frustumSize = 500
-
-        const orthographicCameraSettings = {
-            floor1:{
-                left: 0.5 * frustumSize * sizes.aspect/ (-2),
-                right: 0.5 * frustumSize * sizes.aspect/ (2),
-                top: frustumSize / 2,
-                bottom: frustumSize/(-2),
-                near: 1,
-                far: 10000,
-                x: 23,
-                y: 12,
-                z: 7,
-                targetx: -100,
-                targety: -14,
-                targetz: -3,
-            },
-            floor2:{
-                left: 0.5 * frustumSize * sizes.aspect/ (-2),
-                right: 0.5 * frustumSize * sizes.aspect/ (2),
-                top: frustumSize / 2,
-                bottom: frustumSize/(-2),
-                near: 1,
-                far: 10000,
-                x: 23,
-                y: 32,
-                z: 7,
-                targetx: -100,
-                targety: 6,
-                targetz: -3,
-            },
-            floor3:{
-                left: 0.5 * frustumSize * sizes.aspect/ (-2),
-                right: 0.5 * frustumSize * sizes.aspect/ (2),
-                top: frustumSize / 2,
-                bottom: frustumSize/(-2),
-                near: 1,
-                far: 10000,
-                x: 23,
-                y: 52,
-                z: 7,
-                targetx: -100,
-                targety: 26,
-                targetz: -3,
-            },
-            floor4:{
-                left: 0.5 * frustumSize * sizes.aspect/ (-2),
-                right: 0.5 * frustumSize * sizes.aspect/ (2),
-                top: frustumSize / 2,
-                bottom: frustumSize/(-2),
-                near: 1,
-                far: 10000,
-                x: 23,
-                y: 72,
-                z: 7,
-                targetx: -100,
-                targety: 46,
-                targetz: -3,
-            },
-            roof:{
-                left: 0.5 * frustumSize * sizes.aspect/ (-2),
-                right: 0.5 * frustumSize * sizes.aspect/ (2),
-                top: frustumSize / 2,
-                bottom: frustumSize/(-2),
-                near: 1,
-                far: 10000,
-                x: 23,
-                y: 72,
-                z: 7,
-                targetx: -100,
-                targety: 46,
-                targetz: -3,
-            }
-        }
-
-        //tweening params
-        const tweenParams = {
-            animationDuration: 2000,
-            positionChangeFactor: 1,
-            targetChangeFactor: 1,
-            floorMoveFactor: 1,
-            cameraSpinFactor: 1
         }
 
         /**
@@ -293,8 +83,15 @@ class Tower extends React.Component{
         */
 
 
-        //Loading Manager
+        //Loaders
         const loadingManager = new THREE.LoadingManager()
+        const dracoLoader = new DRACOLoader(loadingManager)                     //Compressed file loader
+        dracoLoader.setDecoderPath('./draco/')
+        const gltfLoader = new GLTFLoader(loadingManager)                       //glTF format loader
+        gltfLoader.setDRACOLoader(dracoLoader)                          
+        const textureLoader = new THREE.TextureLoader(loadingManager)           //Texture (image) loader
+        const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager)   //Cube texture (sky texture) loader
+        // const fontLoader = new FontLoader(loadingManager)
 
         //Enable cache
         THREE.Cache.enabled = true
@@ -303,28 +100,18 @@ class Tower extends React.Component{
             console.log( 'Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
         };
         loadingManager.onLoad = () => {
-            //Set loaded flag and print
             this.setState({loaded: true})
             console.log( 'Loading complete!');
         };
         loadingManager.onProgress = ( url, itemsLoaded, itemsTotal ) => {
+            //update state for progress bar
             this.setState({progress: (100/itemsTotal) * itemsLoaded})
             this.setState({progressText: 'Loading file: ' + url})
             console.log( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
         };
-
         loadingManager.onError = function ( url ) {
             console.log( 'There was an error loading ' + url );
         };
-
-        //Loaders
-        const dracoLoader = new DRACOLoader(loadingManager)                     //Compressed file loader
-        dracoLoader.setDecoderPath('./draco/')
-        const gltfLoader = new GLTFLoader(loadingManager)                       //glTF format loader
-        gltfLoader.setDRACOLoader(dracoLoader)                          
-        const textureLoader = new THREE.TextureLoader(loadingManager)           //Texture (image) loader
-        const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager)   //Cube texture (sky texture) loader
-        // const fontLoader = new FontLoader(loadingManager)
 
         //Helper functions for main file loading
         function loadWithPromise(url, loader){
@@ -362,7 +149,7 @@ class Tower extends React.Component{
                 outGroup.add(black)
             }
             
-            //Texture Windows
+            //Texture Windows .. or don't i guess
             if(windows && false){
                 const windowMaterial = new THREE.MeshPhysicalMaterial({  
                     roughness: 0,  
@@ -370,7 +157,7 @@ class Tower extends React.Component{
                 });
                 windows.traverse((child) => {child.material = windowMaterial});  
                 applyModelSettings(windows)  
-                // outGroup.add(windows) //For now... No windows
+                outGroup.add(windows)
             }
 
             //Texture main model
@@ -412,25 +199,7 @@ class Tower extends React.Component{
     
             //Update camera
             if(this.camera){
-                if(this.state.useOrthoCam){
-                    this.camera.left = - 0.5 * frustumSize * sizes.aspect / 2;
-                    this.camera.right = 0.5 * frustumSize * sizes.aspect / 2;
-                    this.camera.top = frustumSize / 2;
-                    this.camera.bottom = - frustumSize / 2;
-                    switch(true){
-                        case (sizes.width <= 700):
-                            this.camera.zoom = 6;
-                            break;
-                        case (sizes.width <= 1000):
-                            this.camera.zoom = 7;
-                            break;
-                        default:
-                            this.camera.zoom = 8;
-                            break;
-                    }
-                } else {
-                    this.camera.aspect = sizes.aspect
-                }
+                this.camera.aspect = sizes.aspect
                 this.camera.updateProjectionMatrix()
             }
     
@@ -438,10 +207,6 @@ class Tower extends React.Component{
             if(this.renderer){
                 this.renderer.setSize(sizes.width, sizes.height)
                 this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-            }
-            //on every loaded resize
-            if(this.state.loaded){
-                //do something
             }
         }
 
@@ -453,7 +218,7 @@ class Tower extends React.Component{
         const handleClick = () => {
             if(currentIntersect)
             {
-                const duration = tweenParams.animationDuration * tweenParams.positionChangeFactor
+                const duration = sceneSettings.animationDurations.clickFocus
                 switch(currentIntersect.object.name)
                 {
                     case "Floor3_Clickable_Home":
@@ -512,12 +277,6 @@ class Tower extends React.Component{
                         this.setState({spinBuilding: false})
                         shiftCamera(scenes.Floor3_Clickable_BlueHaze, this.camera, this.controls, duration)
                         break
-                    // case "Roof_Scene":
-                    //     changeScene(this.camera, this.controls, "roof")
-                    //     break
-                    // case "Floor4_Scene":
-                    //     changeScene(this.camera, this.controls, "floor4")
-                    //     break
                     default:
                         console.log("Unhandled Click Event: ", currentIntersect.object)
                         break
@@ -531,7 +290,6 @@ class Tower extends React.Component{
             window.addEventListener('mousemove', handleMouseMove)
             window.addEventListener('click', handleClick) 
         }
-
 
         // Remove Listeners From Window, also dismantles gui
         function removeListeners(){
@@ -563,9 +321,7 @@ class Tower extends React.Component{
             'textures/sky/nz.png'
         ]);
         
-        //Move this somewhere :)
         this.scene.background = skyCubeTexture;
-        // this.scene.background = new THREE.Color( 'skyblue');
         
         //Loaded Data
         let buildingGroup = new THREE.Group()
@@ -574,14 +330,14 @@ class Tower extends React.Component{
         let floor3Group = new THREE.Group()
         let floor4Group = new THREE.Group()
         let roofGroup = new THREE.Group()
+       
+        //Pre-Vis Objects
         const demoMaterial = new THREE.MeshStandardMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
         const demoMaterial1 = new THREE.MeshStandardMaterial( {color: 0xff0000, side: THREE.DoubleSide} );
-        const demoMaterial2 = new THREE.MeshStandardMaterial( {color: 0x00ff00, side: THREE.DoubleSide} );
-        const demoMaterial3 = new THREE.MeshStandardMaterial( {color: 0x0000ff, side: THREE.DoubleSide} );
         const floor1 = doModelLoading('/models/floor1/floor1.glb',demoMaterial, gltfLoader, floor1Group)
         const floor2 = doModelLoading('/models/floor2/floor2.glb',demoMaterial1, gltfLoader, floor2Group)
-        // const floor3 = doModelLoading('/models/floor3/floor3.glb',demoMaterial2, gltfLoader, floor3Group)
         
+        //Main imported models
         const floor3 = doCombinedLoading(
             '/models/floor3/floor3.glb',
             gltfLoader, 
@@ -601,7 +357,6 @@ class Tower extends React.Component{
             textureLoader, 
             roofGroup)
         
-        // clickableObjects.push(floor1Group,floor2Group,floor3Group,floor4Group)
         buildingGroup.add(floor1Group,floor2Group,floor3Group,floor4Group,roofGroup)
         buildingGroup.rotation.y = Math.PI / 4;
         this.scene.add(buildingGroup)
@@ -618,6 +373,7 @@ class Tower extends React.Component{
 
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6)
         const targetObject = new THREE.Object3D()
+        targetObject.position.set(0, 40, 0)
         directionalLight.castShadow = true
         directionalLight.shadow.mapSize.set(1024, 1024)
         directionalLight.shadow.camera.far = 15
@@ -625,7 +381,7 @@ class Tower extends React.Component{
         directionalLight.shadow.camera.top = 7
         directionalLight.shadow.camera.right = 7
         directionalLight.shadow.camera.bottom = - 7
-        directionalLight.position.set(5, 5, 5)
+        directionalLight.position.set(15, 60, 15)
         directionalLight.visible = true
         directionalLight.target = targetObject
         this.scene.add(directionalLight, targetObject)
@@ -638,9 +394,10 @@ class Tower extends React.Component{
          * GUI ---------------------------------------------------------------------------------
          */
 
-        //Debug functions
         const debugObject = {}
         let focus = null
+        
+        //Debug Functions ====================================>
 
         const createBox = (width, height, depth, position) =>{
             const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
@@ -678,15 +435,7 @@ class Tower extends React.Component{
         }
         debugObject.placefocus = () => {
             if(!focus){
-                focus = createBox(
-                    1,
-                    1,
-                    1,
-                {
-                    x: params.focusx,
-                    y: params.focusy,
-                    z: params.focusz,
-                })
+                focus = createBox(1,1,1,{ x: debugParams.focusx, y: debugParams.focusy, z: debugParams.focusz })
                 this.scene.add(focus)
             } else {
                 this.scene.remove(focus)
@@ -694,35 +443,24 @@ class Tower extends React.Component{
             }
         }
 
-        var debugGUI = gui.addFolder("Scene")
-        debugGUI.add(debugObject, 'toggleSpin')
-        debugGUI.add(debugObject, 'toggleAnimations')
+        //Scene GUI ==========================================>
+        var sceneGUI = gui.addFolder("Scene")
+        sceneGUI.add(debugObject, 'toggleAnimations')
 
-
-        var debugGUI = gui.addFolder("Debug")
-        debugGUI.add(debugObject, 'toggleVerbose')
-
-        //Camera GUI
-        var cameraGUI = gui.addFolder("Camera")
-        cameraGUI.add(debugObject, 'logCamera')
-        cameraGUI.add(debugObject, 'toggleControls')
-
-        // Focus
-        var focusGUI = cameraGUI.addFolder("Focus Object")
-        focusGUI.add(debugObject, 'placefocus')
-        focusGUI.add(params, 'focusx').min(-100).max(100).step(0.001)
-        focusGUI.add(params, 'focusy').min(-100).max(100).step(0.001)
-        focusGUI.add(params, 'focusz').min(-100).max(100).step(0.001)
-
+        //Spin GUI
+        var spinGUI = sceneGUI.addFolder("Building Rotation")
+        spinGUI.add(debugObject, 'toggleSpin').name("Toggle Spin")
+        spinGUI.add(sceneSettings, 'rotationSpeed').min(-.001).max(.001).step(0.0001).name("Rotation Speed")
 
         //Lights GUI
-        var lightsGUI = gui.addFolder("Lighting")
-
+        var lightsGUI = sceneGUI.addFolder("Lighting")
+        
         var ambientGUI = lightsGUI.addFolder("Ambient Light")
         ambientGUI.addColor(lightColors, 'ambientLightColor').onChange(() =>{ambientLight.color.set(lightColors.ambientLightColor)}).name("Color")
         ambientGUI.add(ambientLight, 'intensity').min(0).max(1).step(0.001)
         ambientGUI.add(ambientLight, 'visible')
-
+        
+        //Directional Light
         var directionalGUI = lightsGUI.addFolder("Directional Light")
         directionalGUI.addColor(lightColors, 'directionalLightColor').onChange(() =>{directionalLight.color.set(lightColors.directionalLightColor)}).name("Color")
         directionalGUI.add(directionalLight, 'intensity').min(0).max(5).step(0.001)
@@ -734,6 +472,27 @@ class Tower extends React.Component{
         directionalGUI.add(targetObject.position, 'z').min(- 20).max(20).step(0.001).onChange(() => { directionalLightHelper.update()}).name("Target: z")
         directionalGUI.add(directionalLight, 'visible')
         directionalGUI.add(directionalLightHelper, 'visible').name('helper')
+
+        //Camera GUI =========================================>
+        var cameraGUI = gui.addFolder("Camera")
+        cameraGUI.add(debugObject, 'logCamera')
+        cameraGUI.add(debugObject, 'toggleControls')
+        
+        // Focus
+        var focusGUI = cameraGUI.addFolder("Focus Object")
+        focusGUI.add(debugObject, 'placefocus')
+        focusGUI.add(debugParams, 'focusx').min(-100).max(100).step(0.001)
+        focusGUI.add(debugParams, 'focusy').min(-100).max(100).step(0.001)
+        focusGUI.add(debugParams, 'focusz').min(-100).max(100).step(0.001)
+        
+        
+
+        
+        //Debug GUI ==========================================>
+        var debugGUI = gui.addFolder("Debug")
+        debugGUI.add(debugObject, 'toggleVerbose')
+
+
 
         /**
         * Initialize Scene Objects -------------------------------------------------------------
@@ -753,45 +512,12 @@ class Tower extends React.Component{
             this.scene.add(this.camera)
         }
 
-        const setupOrthographicCamera = () => {
-            this.camera = new THREE.OrthographicCamera(
-                orthographicCameraSettings.roof.left,
-                orthographicCameraSettings.roof.right,
-                orthographicCameraSettings.roof.top,
-                orthographicCameraSettings.roof.bottom,
-                orthographicCameraSettings.roof.near,
-                orthographicCameraSettings.roof.far,
-            )
-            
-            this.camera.position.set(
-                orthographicCameraSettings.roof.x,
-                orthographicCameraSettings.roof.y,
-                orthographicCameraSettings.roof.z
-            )
-
-            this.camera.zoom = 8
-
-            // this.camera.updateProjectionMatrix()
-            this.scene.add(this.camera)
-        }
-
         // Renderer
         const setupRenderer = () => {
             this.renderer = new THREE.WebGLRenderer()
             this.renderer.setSize(sizes.width, sizes.height)
             this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
             this.mount.appendChild( this.renderer.domElement );
-        }
-
-        // Controls
-        const setupOrthographicCamControls = () => {
-            this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-            this.controls.target.set(
-                orthographicCameraSettings.roof.targetx,
-                orthographicCameraSettings.roof.targety,
-                orthographicCameraSettings.roof.targetz)
-            this.controls.enableDamping = true    
-            this.controls.enabled = false
         }
 
         // Controls
@@ -808,19 +534,14 @@ class Tower extends React.Component{
         const init = () => {
             attatchListeners()
             setupRenderer()
-            if(this.state.useOrthoCam){
-                setupOrthographicCamera()
-                setupOrthographicCamControls()
-            } else {
-                setupPerspectiveCamera()
-                setupPerspectiveCamControls()
-            }
+            setupPerspectiveCamera()
+            setupPerspectiveCamControls()
         }
 
         init()        
 
         /**
-         * Animation Loop ---------------------------------------------------------------------
+         * Scene Animation Functions -------------------------------------------------------
          */
 
         /**
@@ -833,25 +554,26 @@ class Tower extends React.Component{
          * method: https://blogs.perficient.com/2020/05/21/3d-camera-movement-in-three-js-i-learned-the-hard-way-so-you-dont-have-to/
          */
         function shiftCamera(destination, cam, controls, duration){
+            console.log("duration:", duration)
             let time = {t:0};
             let currentTarget = {x: controls.target.x,y: controls.target.y,z: controls.target.z}
 
             new TWEEN.Tween(time)
-                .to({t:1}, tweenParams.animationDuration * tweenParams.positionChangeFactor)
+                .to({t:1}, duration)
                 .onStart(()=>{
                     new TWEEN.Tween(cam.position)
                         .to({
                             x: destination.cameraPositionX,
                             y: destination.cameraPositionY,
                             z: destination.cameraPositionZ
-                        })
+                        }, duration)
                         .onStart(() => {
                             new TWEEN.Tween(currentTarget)
                             .to({
                                 x: destination.targetx,
                                 y: destination.targety,
                                 z: destination.targetz
-                            })
+                            }, duration)
                             .easing(TWEEN.Easing.Quadratic.InOut)
                             .onUpdate(()=>{
                                 controls.target.set(currentTarget.x, currentTarget.y, currentTarget.z)
@@ -870,7 +592,7 @@ class Tower extends React.Component{
             let time = {t:0};
 
             new TWEEN.Tween(time)
-                .to({t:1}, tweenParams.animationDuration * tweenParams.floorMoveFactor)
+                .to({t:1}, sceneSettings.animationDurations.moveFloor)
                 .onStart(()=>{
                     new TWEEN.Tween(floor.position)
                         .to({
@@ -899,7 +621,7 @@ class Tower extends React.Component{
             } else {
                 targetRot = zeroMin
             }
-
+            
             console.log("numTurns", numTurns)
             console.log("zeroMin", zeroMin)
             console.log("zeroMax", zeroMax)
@@ -907,7 +629,7 @@ class Tower extends React.Component{
             console.log("targetRot", targetRot)
 
             new TWEEN.Tween(time)
-                .to({t:1}, tweenParams.animationDuration * tweenParams.cameraSpinFactor)
+                .to({t:1}, sceneSettings.animationDurations.zeroRotation)
                 .onStart(()=>{
                     new TWEEN.Tween(object.rotation)
                         .to({
@@ -926,7 +648,7 @@ class Tower extends React.Component{
             console.log("changescene: ", destination);
             const origin = new THREE.Vector3(0,0,0)
             const dest = new THREE.Vector3(0,100,0)
-            const duration = tweenParams.animationDuration * tweenParams.positionChangeFactor
+            const duration = sceneSettings.animationDurations.changeScene
             switch(destination){
                 case "floor1":
                     moveFloor(roofGroup, dest)
@@ -1005,6 +727,11 @@ class Tower extends React.Component{
             }
         }
 
+        /**
+         * Animation Loop -------------------------------------------------------
+         */
+
+
         const clock = new THREE.Clock()
         let previousTime = 0
         const raycaster = new THREE.Raycaster() 
@@ -1018,7 +745,7 @@ class Tower extends React.Component{
 
             //Move stuff 
             if(this.state.spinBuilding && !this.state.lockAnimations){
-                buildingGroup.rotation.y += Math.PI * rotationSpeed * 5;
+                buildingGroup.rotation.y += Math.PI * sceneSettings.rotationSpeed;
             }
 
             //Raycasting from mouse pointer
@@ -1044,7 +771,7 @@ class Tower extends React.Component{
             this.setState({camDestination: ""})
 
             if(this.state.resetRequested){
-                const duration = tweenParams.animationDuration * tweenParams.positionChangeFactor
+                const duration = sceneSettings.animationDurations.resetCamera
                 resetCamera(this.state.currentFloor, duration)
                 this.setState({resetRequested: false})
             }
@@ -1061,7 +788,7 @@ class Tower extends React.Component{
 
             // Focus
             if(focus){ 
-                focus.position.set(params.focusx,params.focusy,params.focusz)
+                focus.position.set(debugParams.focusx,debugParams.focusy,debugParams.focusz)
                 this.camera.lookAt(focus)
                 this.controls.target.set(
                     focus.position.x,
