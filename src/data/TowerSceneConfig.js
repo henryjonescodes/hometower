@@ -1,12 +1,18 @@
  //Scene settings
  export const sceneSettings = {
     rotationSpeed: .0001,
+    fov:{
+        widescreen: 55,
+        standard: 65,
+        mobile: 100
+    },
     animationDurations: { //Animation durations in miliseconds
         moveFloor: 2000,
         zeroRotation: 3000,
-        changeScene: 2000,
+        changeFloor: 2000,
         resetCamera: 4000,
-        clickFocus: 3000
+        clickFocus: 3000,
+        updateFov: 3000,
     }
  }
  
