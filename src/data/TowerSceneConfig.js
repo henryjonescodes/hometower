@@ -1,18 +1,57 @@
  //Scene settings
  export const sceneSettings = {
     rotationSpeed: .0001,
+    fov:{
+        widescreen: 55,
+        standard: 65,
+        mobile: 100
+    },
     animationDurations: { //Animation durations in miliseconds
         moveFloor: 2000,
         zeroRotation: 3000,
-        changeScene: 2000,
+        changeFloor: 2000,
         resetCamera: 4000,
-        clickFocus: 3000
+        clickFocus: 3000,
+        updateFov: 3000,
+    },
+    water: {
+        oceanColor: 0x001e0f,
+        oceanSunColor: 0x333333,
+        distortionScale: 2.5,
+        timeModifier: 320
     }
  }
  
  
  //Camera settings
  export const scenes = {
+    Floor4_Clickable_Drums:{
+        cameraPositionX: 0.8773765760728143,
+        cameraPositionY: 42.64213871300854,
+        cameraPositionZ: -6.7331822316975165,
+        fov: 45,
+        targetx: 6.959,
+        targety: 42.608,
+        targetz: -6.134
+    },
+    Floor4_Clickable_Nook:{
+        cameraPositionX: -0.07687130326844915,
+        cameraPositionY: 42.92862167225454,
+        cameraPositionZ: 6.245485898592668,
+        fov: 45,
+        targetx: -8.638,
+        targety: 42.608,
+        targetz: 5.475
+    },
+    Floor4_Clickable_Desk:{
+        cameraPositionX: -8.16917197449256,
+        cameraPositionY: 42.949361472089016,
+        cameraPositionZ: -4.879401852203502,
+        fov: 45,
+        targetx: -6.1,
+        targety: 42.559,
+        targetz: -7.895
+    },
     Floor3_Clickable_Acomplices:{
         cameraPositionX: 3.043798085974042,
         cameraPositionY: 35.28954205740364,
@@ -85,16 +124,34 @@
         targety: 35.176,
         targetz: -11.233
     },
+    Floor2_Clickable_BugLight:{
+        cameraPositionX: -0.8686348260480123,
+        cameraPositionY: 25.5095001813743,
+        cameraPositionZ: 2.9471108962508348,
+        fov: 45,
+        targetx: 6.711,
+        targety: 26.022,
+        targetz: 7.454
+    },
+    Floor2_Clickable_Moxie:{
+        cameraPositionX: 0.31706004458066417,
+        cameraPositionY: 24.789364107458244,
+        cameraPositionZ: -2.9428268864600744,
+        fov: 45,
+        targetx: 9.11,
+        targety: 24.483,
+        targetz: -3.908
+    },
 }
 
 export const perspecitveCameraSettings = {
     floor1:{
         cameraPositionX: 20,
-        cameraPositionY: 24,
+        cameraPositionY: 8,
         cameraPositionZ: 20,
         fov: 45,
         targetx: 0,
-        targety: 18,
+        targety: 10,
         targetz: 2
     },
     floor2:{
