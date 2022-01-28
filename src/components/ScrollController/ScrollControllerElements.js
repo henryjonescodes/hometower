@@ -9,7 +9,7 @@ export const Container = styled.div`
     justify-content: left;
     /* border: 1px solid red; */
 
-    transform: ${({Expanded}) => (Expanded ? 'translateX(-200px);' : 'translateX(0);')};
+    transform: ${({Expanded}) => (!Expanded ? 'translateX(-200px);' : 'translateX(0);')};
     transition: all 1s ease-in-out;
 `
 export const ExpandButton = styled.button`
