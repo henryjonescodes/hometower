@@ -1,10 +1,10 @@
  //Scene settings
  export const sceneSettings = {
-    rotationSpeed: .0001,
+    rotationSpeed: .00025,
     fov:{
         widescreen: 55,
         standard: 65,
-        mobile: 100
+        mobile: 80
     },
     animationDurations: { //Animation durations in miliseconds
         moveFloor: 2000,
@@ -183,7 +183,7 @@ export const perspecitveCameraSettings = {
     },
     roof:{
         cameraPositionX: 20,
-        cameraPositionY: 56,
+        cameraPositionY: 53.5,
         cameraPositionZ: 20,
         fov: 45,
         targetx: 0,
