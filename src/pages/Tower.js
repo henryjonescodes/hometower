@@ -383,12 +383,6 @@ class Tower extends React.Component{
         let floor3Group = new THREE.Group()
         let floor4Group = new THREE.Group()
         let roofGroup = new THREE.Group()
-       
-        //Pre-Vis Objects
-        // const demoMaterial = new THREE.MeshStandardMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
-        // const demoMaterial1 = new THREE.MeshStandardMaterial( {color: 0xff0000, side: THREE.DoubleSide} );
-        // const floor1 = doModelLoading('/models/floor1/floor1.glb',demoMaterial, gltfLoader, floor1Group)
-        // const floor2 = doModelLoading('/models/floor2/floor2.glb',demoMaterial1, gltfLoader, floor2Group)
         
         //Main imported models
         doCombinedLoading(
@@ -961,7 +955,8 @@ class Tower extends React.Component{
         return (
             <>
                 <ScrollController navigate = {this.navigate} back = {this.back}/>
-                {!this.state.loaded && <ProgressBar value={Math.ceil(this.state.progress)} max={100} text={this.state.progressText}/>}
+                {/* {!this.state.loaded && <ProgressBar value={Math.ceil(this.state.progress)} max={100} text={this.state.progressText}/>} */}
+                <ProgressBar value={Math.ceil(this.state.progress)} max={100} text={this.state.progressText} loaded={this.state.loaded}/>
                 <div ref={ref => (this.mount = ref)} />
             </>
         )
