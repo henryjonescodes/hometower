@@ -8,10 +8,10 @@
     },
     animationDurations: { //Animation durations in miliseconds
         moveFloor: 2000,
-        zeroRotation: 3000,
+        zeroRotation: 1500,
         changeFloor: 2000,
-        resetCamera: 4000,
-        clickFocus: 3000,
+        resetCamera: 2000,
+        clickFocus: 2000,
         updateFov: 3000,
     },
     water: {
