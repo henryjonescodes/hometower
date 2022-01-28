@@ -6,10 +6,10 @@ import TWEEN from '@tweenjs/tween.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
-import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { Water } from 'three/examples/jsm/objects/Water.js';
 import ProgressBar from '../components/ProgressBar/ProgressBar';
 import ScrollController from '../components/ScrollController/ScrollController';
+// import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 
 import {scenes, perspecitveCameraSettings, sceneSettings} from '../data/TowerSceneConfig'
 
@@ -59,7 +59,7 @@ class Tower extends React.Component{
     }
     componentDidMount(){
         //Setup GUI
-        let gui = new dat.GUI({ closed: true, width: 700})
+        const gui = new dat.GUI({ closed: true, width: 700})
         // dat.GUI.toggleHide();
 
         //Setup Three.js scene
@@ -127,11 +127,24 @@ class Tower extends React.Component{
         async function doCombinedLoading(url, loader, textureUrl, textureLoader, scene){
             let outGroup = new THREE.Group()
             
+            //Sepparated Imports
             const gltfData = await loadWithPromise(url, loader)
+            console.log(gltfData)
             const objects = gltfData.scene.children.find((child) => child.name.includes('Scene'))
             const windows = gltfData.scene.children.find((child) => child.name.includes('Window'))
             const black = gltfData.scene.children.find((child) => child.name.includes('Black'))
+            const metalDark = gltfData.scene.children.find((child) => child.name.includes('MetalDark'))
             const clickable = gltfData.scene.children.filter((child) => child.name.includes('Clickable'))
+            const bobbers = gltfData.scene.children.filter((child) => child.name.includes('Bobber'))
+            
+            //Texture main model
+            const texture = await loadWithPromise(textureUrl, textureLoader)
+            texture.flipY = false
+            const bakeMaterial = new THREE.MeshBasicMaterial({map: texture})
+            objects.traverse((child) => {child.material = bakeMaterial});    
+            clickableObjects.push(objects);
+            applyModelSettings(objects)
+            outGroup.add(objects)
 
             //Handle Clickable Objects
             if(clickable){
@@ -144,12 +157,31 @@ class Tower extends React.Component{
                 })
             }
 
-            //Handle small black objects
+            //Texture floating objects (bobbers)
+            if(bobbers){
+                bobbers.forEach((bobber) => {
+                    bobber.traverse((child) => {
+                        child.material = bakeMaterial
+                        applyModelSettings(bobber)   
+                        outGroup.add(bobber)
+                    })
+                }); 
+            }
+
+            //Texture small black objects
             if(black){
                 const blackMaterial = new THREE.MeshBasicMaterial({ color: 0x000000});
                 black.traverse((child) => {child.material = blackMaterial}); 
                 applyModelSettings(black)   
                 outGroup.add(black)
+            }
+
+            //Texture dark metal objects
+            if(metalDark){
+                const metalDarkMaterial = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 1, roughness: 0.8});
+                metalDark.traverse((child) => {child.material = metalDarkMaterial}); 
+                applyModelSettings(metalDark)   
+                outGroup.add(metalDark)
             }
             
             //Texture Windows .. or don't i guess
@@ -163,27 +195,20 @@ class Tower extends React.Component{
                 outGroup.add(windows)
             }
 
-            //Texture main model
-            const texture = await loadWithPromise(textureUrl, textureLoader)
-            texture.flipY = false
-            const material = new THREE.MeshBasicMaterial({ map: texture})
-            objects.traverse((child) => {child.material = material});    
-            applyModelSettings(objects)
-            outGroup.add(objects)
 
             scene.add(outGroup)
             return outGroup
         }
         
-        //Load single asset
-        async function doModelLoading(url, material, loader, scene){
-            const data = await loadWithPromise(url, loader)  
-            data.scene.traverse((child) => {child.material = material});      
-            let model = data.scene
-            applyModelSettings(model)
-            scene.add(model)
-            return model
-        }
+        // //Load single asset
+        // async function doModelLoading(url, material, loader, scene){
+        //     const data = await loadWithPromise(url, loader)  
+        //     data.scene.traverse((child) => {child.material = material});      
+        //     let model = data.scene
+        //     applyModelSettings(model)
+        //     scene.add(model)
+        //     return model
+        // }
 
         function applyModelSettings(model){
             model.scale.set(10,10,10)
@@ -233,41 +258,81 @@ class Tower extends React.Component{
         const handleClick = () => {
             if(currentIntersect)
             {
-                let target = null
-                switch(currentIntersect.object.name)
-                {
-                    case "Floor3_Clickable_Home":
-                        target = scenes.Floor3_Clickable_Home
-                        break
-                    case "Floor3_Clickable_Acomplices":
-                        target = scenes.Floor3_Clickable_Acomplices
-                        break
-                    case "Floor3_Clickable_MixedMessages":
-                        target = scenes.Floor3_Clickable_MixedMessages
-                        break
-                    case "Floor3_Clickable_HiddenWorlds":
-                        target = scenes.Floor3_Clickable_HiddenWorlds
-                        break
-                    case "Floor3_Clickable_WorldsEdge":
-                        target = scenes.Floor3_Clickable_WorldsEdge
-                        break
-                    case "Floor3_Clickable_Graduation":
-                        target = scenes.Floor3_Clickable_Graduation
-                        break
-                    case "Floor3_Clickable_Lombard":
-                        target = scenes.Floor3_Clickable_Lombard
-                        break
-                    case "Floor3_Clickable_BlueHaze":
-                        target = scenes.Floor3_Clickable_BlueHaze
-                        break
-                    default:
-                        console.log("Unhandled Click Event: ", currentIntersect.object)
-                        break
-                }
+                if((this.state.currentScene !== null) && (currentIntersect.object.name === "Roof_Scene" || "Floor4_Scene" || "Floor3_Scene" || "Floor2_Scene")){
+                    this.setState({resetRequested: true})
+                } else {
+                    let target = null
+                    switch(currentIntersect.object.name)
+                    {
+                        case "Roof_Clickable_Down":
+                            this.setState({navigateTo: "floor4"})
+                            break
+                        case "Floor4_Clickable_Drums":
+                            target = scenes.Floor4_Clickable_Drums
+                            break
+                        case "Floor4_Clickable_Nook":
+                            target = scenes.Floor4_Clickable_Nook
+                            break
+                        case "Floor4_Clickable_Desk":
+                            target = scenes.Floor4_Clickable_Desk
+                            break
+                        case "Floor4_Clickable_Down":
+                            this.setState({navigateTo: "floor3"})
+                            break
+                        case "Floor4_Clickable_Up":
+                            this.setState({navigateTo: "roof"})
+                            break
+                        case "Floor3_Clickable_Home":
+                            target = scenes.Floor3_Clickable_Home
+                            break
+                        case "Floor3_Clickable_Acomplices":
+                            target = scenes.Floor3_Clickable_Acomplices
+                            break
+                        case "Floor3_Clickable_MixedMessages":
+                            target = scenes.Floor3_Clickable_MixedMessages
+                            break
+                        case "Floor3_Clickable_HiddenWorlds":
+                            target = scenes.Floor3_Clickable_HiddenWorlds
+                            break
+                        case "Floor3_Clickable_WorldsEdge":
+                            target = scenes.Floor3_Clickable_WorldsEdge
+                            break
+                        case "Floor3_Clickable_Graduation":
+                            target = scenes.Floor3_Clickable_Graduation
+                            break
+                        case "Floor3_Clickable_Lombard":
+                            target = scenes.Floor3_Clickable_Lombard
+                            break
+                        case "Floor3_Clickable_BlueHaze":
+                            target = scenes.Floor3_Clickable_BlueHaze
+                            break
+                        case "Floor3_Clickable_Up":
+                            this.setState({navigateTo: "floor4"})
+                            break
+                        case "Floor3_Clickable_Down":
+                            this.setState({navigateTo: "floor2"})
+                            break
+                        case "Floor2_Clickable_BugLight":
+                            target = scenes.Floor2_Clickable_BugLight
+                            break
+                        case "Floor2_Clickable_Moxie":
+                            target = scenes.Floor2_Clickable_Moxie
+                            break
+                        case "Floor2_Clickable_Down":
+                            this.setState({navigateTo: "floor1"})
+                            break
+                        case "Floor2_Clickable_Up":
+                            this.setState({navigateTo: "floor3"})
+                            break
+                        default:
+                            console.log("Unhandled Click Event: ", currentIntersect.object)
+                            break
+                    }
 
-                if(target){
-                    zeroRotation()
-                    this.setState({currentScene: target})
+                    if(target){
+                        zeroRotation()
+                        this.setState({currentScene: target})
+                    }
                 }
             } 
         }
@@ -279,16 +344,16 @@ class Tower extends React.Component{
             window.addEventListener('click', handleClick) 
         }
 
-        // Remove Listeners From Window, also dismantles gui
-        function removeListeners(){
-            window.removeEventListener('resize',handleResize)
-            window.removeEventListener('mousemove',handleMouseMove)
-            window.removeEventListener('click',handleClick)
+        // // Remove Listeners From Window, also dismantles gui
+        // function removeListeners(){
+        //     window.removeEventListener('resize',handleResize)
+        //     window.removeEventListener('mousemove',handleMouseMove)
+        //     window.removeEventListener('click',handleClick)
 
-            //Hide the gui first so it doesnt require reload to go away
-            gui.hide()
-            gui = null
-        }
+        //     //Hide the gui first so it doesnt require reload to go away
+        //     this.gui.hide()
+        //     this.gui.remove()
+        // }
 
         /**
          * Add Objects to Scene ----------------------------------------------------------------
@@ -313,41 +378,73 @@ class Tower extends React.Component{
         
         //Loaded Data
         let buildingGroup = new THREE.Group()
-        let floor1Group = new THREE.Group()
+        // let floor1Group = new THREE.Group()
         let floor2Group = new THREE.Group()
         let floor3Group = new THREE.Group()
         let floor4Group = new THREE.Group()
         let roofGroup = new THREE.Group()
        
         //Pre-Vis Objects
-        const demoMaterial = new THREE.MeshStandardMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
-        const demoMaterial1 = new THREE.MeshStandardMaterial( {color: 0xff0000, side: THREE.DoubleSide} );
-        const floor1 = doModelLoading('/models/floor1/floor1.glb',demoMaterial, gltfLoader, floor1Group)
-        const floor2 = doModelLoading('/models/floor2/floor2.glb',demoMaterial1, gltfLoader, floor2Group)
+        // const demoMaterial = new THREE.MeshStandardMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+        // const demoMaterial1 = new THREE.MeshStandardMaterial( {color: 0xff0000, side: THREE.DoubleSide} );
+        // const floor1 = doModelLoading('/models/floor1/floor1.glb',demoMaterial, gltfLoader, floor1Group)
+        // const floor2 = doModelLoading('/models/floor2/floor2.glb',demoMaterial1, gltfLoader, floor2Group)
         
         //Main imported models
-        const floor3 = doCombinedLoading(
+        doCombinedLoading(
+            '/models/floor2/floor2.glb',
+            gltfLoader, 
+            '/models/floor2/floor2.png',
+            textureLoader, 
+            floor2Group)
+        doCombinedLoading(
             '/models/floor3/floor3.glb',
             gltfLoader, 
             '/models/floor3/floor3.png',
             textureLoader, 
             floor3Group)
-        const floor4 = doCombinedLoading(
+        doCombinedLoading(
             '/models/floor4/floor4.glb',
             gltfLoader, 
             '/models/floor4/floor4.png',
             textureLoader, 
             floor4Group)
-        const roof = doCombinedLoading(
+        doCombinedLoading(
             '/models/roof/roof.glb',
             gltfLoader, 
             '/models/roof/roof.png',
             textureLoader, 
             roofGroup)
         
-        buildingGroup.add(floor1Group,floor2Group,floor3Group,floor4Group,roofGroup)
+        buildingGroup.add(floor2Group,floor3Group,floor4Group,roofGroup)
         buildingGroup.rotation.y = Math.PI / 4;
         this.scene.add(buildingGroup)
+
+        //Water
+        const buildWater = (scene) => {
+            const waterGeometry = new THREE.PlaneGeometry(11, 11);
+            const water = new Water(
+            waterGeometry,
+            {
+                textureWidth: 512,
+                textureHeight: 512,
+                waterNormals: waterTexture,
+                alpha: 1.0,
+                sunDirection: new THREE.Vector3(),
+                sunColor: sceneSettings.water.oceanSunColor,
+                waterColor: sceneSettings.water.oceanColor,
+                distortionScale: sceneSettings.water.distortionScale,
+                fog: scene.fog !== undefined
+            }
+            );
+            water.position.set(3.2,48,3.2)
+            water.rotation.x =- Math.PI / 2;
+            scene.add(water);
+            
+            return water;
+        }
+
+        const water = buildWater(buildingGroup)
 
         //Lights
         const lightColors = {
@@ -421,6 +518,9 @@ class Tower extends React.Component{
         debugObject.toggleSpin = () =>{
             this.setState({spinBuilding: !this.state.spinBuilding})
         }
+        debugObject.zeroRotation = () =>{
+            zeroRotation()
+        }
         debugObject.placefocus = () => {
             if(!focus){
                 focus = createBox(1,1,1,{ x: debugParams.focusx, y: debugParams.focusy, z: debugParams.focusz })
@@ -434,9 +534,10 @@ class Tower extends React.Component{
         //Scene GUI ==========================================>
         var sceneGUI = gui.addFolder("Scene")
         sceneGUI.add(debugObject, 'toggleAnimations')
-
+        
         //Spin GUI
         var spinGUI = sceneGUI.addFolder("Building Rotation")
+        spinGUI.add(debugObject, 'zeroRotation')
         spinGUI.add(debugObject, 'toggleSpin').name("Toggle Spin")
         spinGUI.add(sceneSettings, 'rotationSpeed').min(-.001).max(.001).step(0.0001).name("Rotation Speed")
 
@@ -660,13 +761,15 @@ class Tower extends React.Component{
             const duration = sceneSettings.animationDurations.changeFloor
             switch(destination){
                 case "floor1":
+                    water.visible = false
                     moveFloor(roofGroup, dest)
                     moveFloor(floor4Group, dest)
                     moveFloor(floor3Group, dest)
-                    moveFloor(floor2Group, dest)
+                    moveFloor(floor2Group, origin)
                     resetCamera(destination, duration)
                     break;
                 case "floor2":
+                    water.visible = false
                     moveFloor(roofGroup, dest)
                     moveFloor(floor4Group, dest)
                     moveFloor(floor3Group, dest)
@@ -674,6 +777,7 @@ class Tower extends React.Component{
                     resetCamera(destination, duration)
                     break;
                 case "floor3":
+                    water.visible = false
                     moveFloor(roofGroup, dest)
                     moveFloor(floor4Group, dest)
                     moveFloor(floor3Group, origin)
@@ -681,6 +785,7 @@ class Tower extends React.Component{
                     resetCamera(destination, duration)
                     break;
                 case "floor4":
+                    water.visible = false
                     moveFloor(roofGroup, dest)
                     moveFloor(floor4Group, origin)
                     moveFloor(floor3Group, origin)
@@ -741,16 +846,19 @@ class Tower extends React.Component{
          */
 
 
-        const clock = new THREE.Clock()
-        let previousTime = 0
+        // const clock = new THREE.Clock()
+        // let previousTime = 0
         const raycaster = new THREE.Raycaster() 
 
         const tick = () =>
         {
-            const elapsedTime = clock.getElapsedTime()
+            // const elapsedTime = clock.getElapsedTime()
             // const deltaTime = elapsedTime - previousTime
-            previousTime = elapsedTime
+            // previousTime = elapsedTime
             TWEEN.update();
+
+            //Water
+            water.material.uniforms[ 'time' ].value += 1.0 / sceneSettings.water.timeModifier;
 
             //Move stuff 
             if(this.state.spinBuilding && !this.state.lockAnimations){
@@ -805,6 +913,10 @@ class Tower extends React.Component{
                     case "mobile":
                         updateFov(this.camera, sceneSettings.fov.mobile)
                         break
+                    default:
+                        updateFov(this.camera, sceneSettings.fov.standard)
+                        break
+                            
                 }
                 this.setState({zooming: false})
             }
