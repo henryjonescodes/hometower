@@ -8,10 +8,11 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 import { Water } from 'three/examples/jsm/objects/Water.js';
 import ProgressBar from '../components/ProgressBar/ProgressBar';
-import ScrollController from '../components/ScrollController/ScrollController';
+// import ScrollController from '../components/ScrollController/ScrollController';
 // import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 
 import {scenes, perspecitveCameraSettings, sceneSettings} from '../data/TowerSceneConfig'
+import DetailPanel from '../components/DetailPanel/DetailPanel';
 
 class Tower extends React.Component{
     constructor(props){
@@ -258,9 +259,10 @@ class Tower extends React.Component{
         const handleClick = () => {
             if(currentIntersect)
             {
-                if((this.state.currentScene !== null) && (currentIntersect.object.name === "Roof_Scene" || "Floor4_Scene" || "Floor3_Scene" || "Floor2_Scene")){
-                    this.setState({resetRequested: true})
-                } else {
+                // if((this.state.currentScene !== null) && (currentIntersect.object.name === "Roof_Scene" || "Floor4_Scene" || "Floor3_Scene" || "Floor2_Scene")){
+                //     this.setState({resetRequested: true})
+                // } 
+                if(this.state.currentScene == null) {
                     let target = null
                     switch(currentIntersect.object.name)
                     {
@@ -655,7 +657,6 @@ class Tower extends React.Component{
         function shiftCamera(destination, cam, controls, duration){
             let time = {t:0};
             let currentTarget = {x: controls.target.x,y: controls.target.y,z: controls.target.z}
-
             new TWEEN.Tween(time)
                 .to({t:1}, duration)
                 .onStart(()=>{
@@ -954,8 +955,8 @@ class Tower extends React.Component{
     render(){
         return (
             <>
-                <ScrollController navigate = {this.navigate} back = {this.back}/>
-                {/* {!this.state.loaded && <ProgressBar value={Math.ceil(this.state.progress)} max={100} text={this.state.progressText}/>} */}
+                {/* <ScrollController navigate = {this.navigate} back = {this.back}/> */}
+                <DetailPanel scene={this.state.currentScene} back = {this.back}/>
                 <ProgressBar value={Math.ceil(this.state.progress)} max={100} text={this.state.progressText} loaded={this.state.loaded}/>
                 <div ref={ref => (this.mount = ref)} />
             </>
