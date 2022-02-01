@@ -8,8 +8,9 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 import { Water } from 'three/examples/jsm/objects/Water.js';
 import ProgressBar from '../components/ProgressBar/ProgressBar';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 // import ScrollController from '../components/ScrollController/ScrollController';
-// import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 
 import {scenes, perspecitveCameraSettings, sceneSettings} from '../data/TowerSceneConfig'
 import DetailPanel from '../components/DetailPanel/DetailPanel';
@@ -69,6 +70,7 @@ class Tower extends React.Component{
         //Setup listener data
         const mouse = new THREE.Vector2()
         const clickableObjects = []
+        const toolTips = []
         let currentIntersect = null
         const sizes = {
             width: window.innerWidth,
@@ -95,23 +97,29 @@ class Tower extends React.Component{
         gltfLoader.setDRACOLoader(dracoLoader)                          
         const textureLoader = new THREE.TextureLoader(loadingManager)           //Texture (image) loader
         const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager)   //Cube texture (sky texture) loader
-        // const fontLoader = new FontLoader(loadingManager)
+        const fontLoader = new FontLoader(loadingManager)
 
         //Enable cache
         THREE.Cache.enabled = true
 
         loadingManager.onStart = function ( url, itemsLoaded, itemsTotal ) {
-            console.log( 'Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+            if(this.verbose){
+                console.log( 'Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+            }
         };
         loadingManager.onLoad = () => {
             this.setState({loaded: true})
-            console.log( 'Loading complete!');
+            if(this.verbose){
+                console.log( 'Loading complete!');
+            }
         };
         loadingManager.onProgress = ( url, itemsLoaded, itemsTotal ) => {
             //update state for progress bar
             this.setState({progress: (100/itemsTotal) * itemsLoaded})
             this.setState({progressText: 'Loading file: ' + url})
-            console.log( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+            if(this.verbose){
+                console.log( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+            }
         };
         loadingManager.onError = function ( url ) {
             console.log( 'There was an error loading ' + url );
@@ -130,7 +138,6 @@ class Tower extends React.Component{
             
             //Sepparated Imports
             const gltfData = await loadWithPromise(url, loader)
-            console.log(gltfData)
             const objects = gltfData.scene.children.find((child) => child.name.includes('Scene'))
             const windows = gltfData.scene.children.find((child) => child.name.includes('Window'))
             const black = gltfData.scene.children.find((child) => child.name.includes('Black'))
@@ -320,14 +327,16 @@ class Tower extends React.Component{
                         case "Floor2_Clickable_Moxie":
                             target = scenes.Floor2_Clickable_Moxie
                             break
-                        case "Floor2_Clickable_Down":
-                            this.setState({navigateTo: "floor1"})
-                            break
+                        // case "Floor2_Clickable_Down":
+                        //     this.setState({navigateTo: "floor1"})
+                        //     break
                         case "Floor2_Clickable_Up":
                             this.setState({navigateTo: "floor3"})
                             break
                         default:
-                            console.log("Unhandled Click Event: ", currentIntersect.object)
+                            if(this.state.verbose){
+                                console.log("Unhandled Click Event: ", currentIntersect.object)
+                            }
                             break
                     }
 
@@ -360,13 +369,63 @@ class Tower extends React.Component{
         /**
          * Add Objects to Scene ----------------------------------------------------------------
          */
+        //Main building groups
+        let buildingGroup = new THREE.Group()
+        let floor2Group = new THREE.Group()
+        let floor3Group = new THREE.Group()
+        let floor4Group = new THREE.Group()
+        let roofGroup = new THREE.Group()
 
-        //General
+        //Water Texture
         const waterTexture = textureLoader.load('/textures/misc/waternormals.jpg', function ( texture ) {
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         }) 
 
-        //Sky Textures
+        //Font and Text Texture
+        let helvetica, matcapTexture
+        let fontLoadPromise = loadWithPromise('/fonts/helvetiker_regular.typeface.json',fontLoader).then(result => { helvetica = result })
+        let matcapTexturePromise = loadWithPromise('/textures/matcaps/1.png',textureLoader).then(result =>{ matcapTexture = result})
+
+        //Make Text Geometry
+        function generateText(text, font, material, size, height){
+            const out = new THREE.Group()
+            const coneGeometry = new THREE.ConeGeometry( size * 0.8, size * 1.6, 5 );
+
+            //Generate Text and add to scene
+            const textGeometry = new TextGeometry(
+                    text,
+                    {
+                        font: font,
+                        size: size,
+                        height: height,
+                        curveSegments: 4,
+                        bevelEnabled: true,
+                        bevelThickness: 0.03,
+                        bevelSize: 0.02,
+                        bevelOffset: 0,
+                        bevelSegments: 5
+                    }
+                )
+            textGeometry.computeBoundingBox()
+            textGeometry.center()
+            let textMesh = new THREE.Mesh(textGeometry, material)
+            let coneMesh = new THREE.Mesh(coneGeometry, material)
+            coneMesh.rotation.x = Math.PI
+            coneMesh.position.set(0,size * -1.4,0)
+            out.add(textMesh,coneMesh)
+            return out
+        }
+
+        Promise.all([fontLoadPromise, matcapTexturePromise]).then(() => {
+            const textMaterial = new THREE.MeshMatcapMaterial({ matcap: matcapTexture })
+
+            const toolTip = generateText("Down to Floor 4", helvetica, textMaterial, 0.5, .01)
+            toolTip.position.set(0,60,-5)
+            // toolTips.push(toolTip)
+            // roofGroup.add(toolTip)
+        })
+
+        //Sky Texture
         const skyCubeTexture = cubeTextureLoader.load([
             'textures/sky/px.png',
             'textures/sky/nx.png',
@@ -378,15 +437,7 @@ class Tower extends React.Component{
         
         this.scene.background = skyCubeTexture;
         
-        //Loaded Data
-        let buildingGroup = new THREE.Group()
-        // let floor1Group = new THREE.Group()
-        let floor2Group = new THREE.Group()
-        let floor3Group = new THREE.Group()
-        let floor4Group = new THREE.Group()
-        let roofGroup = new THREE.Group()
-        
-        //Main imported models
+        //Baked mesh imported from .glb format
         doCombinedLoading(
             '/models/floor2/floor2.glb',
             gltfLoader, 
@@ -414,7 +465,6 @@ class Tower extends React.Component{
         
         buildingGroup.add(floor2Group,floor3Group,floor4Group,roofGroup)
         buildingGroup.rotation.y = Math.PI / 4;
-        this.scene.add(buildingGroup)
 
         //Water
         const buildWater = (scene) => {
@@ -436,11 +486,11 @@ class Tower extends React.Component{
             water.position.set(3.2,48,3.2)
             water.rotation.x =- Math.PI / 2;
             scene.add(water);
-            
             return water;
         }
 
         const water = buildWater(buildingGroup)
+        this.scene.add(buildingGroup)
 
         //Lights
         const lightColors = {
@@ -508,6 +558,9 @@ class Tower extends React.Component{
         debugObject.toggleVerbose = () =>{
             this.setState({verbose: !this.state.verbose})
         }
+        debugObject.logScene = () =>{
+            console.log(this.scene)
+        }
         debugObject.toggleAnimations = () =>{
             this.setState({lockAnimations: !this.state.lockAnimations})
         }
@@ -570,12 +623,10 @@ class Tower extends React.Component{
         focusGUI.add(debugParams, 'focusy').min(-100).max(100).step(0.001)
         focusGUI.add(debugParams, 'focusz').min(-100).max(100).step(0.001)
         
-        
-
-        
         //Debug GUI ==========================================>
         var debugGUI = gui.addFolder("Debug")
-        debugGUI.add(debugObject, 'toggleVerbose')
+        debugGUI.add(debugObject, 'toggleVerbose').name("Toggle Verbose")
+        debugGUI.add(debugObject, 'logScene').name("Log Scene Object")
 
 
 
@@ -750,7 +801,6 @@ class Tower extends React.Component{
         }
 
         function changeFloor (destination){
-            console.log("changeFloor: ", destination);
             const origin = new THREE.Vector3(0,0,0)
             const dest = new THREE.Vector3(0,100,0)
             const duration = sceneSettings.animationDurations.changeFloor
@@ -887,6 +937,9 @@ class Tower extends React.Component{
             //Handle camera navigation flags
             if(this.state.navigateTo !== ""){
                 changeFloor(this.state.navigateTo)
+                if(this.state.verbose){
+                    console.log("Change Floor To: ", this.state.navigateTo)
+                }
             }
             this.setState({navigateTo: ""})
 
@@ -915,6 +968,11 @@ class Tower extends React.Component{
                 }
                 this.setState({zooming: false})
             }
+
+            // Face tips to user
+            toolTips.forEach((tip) => {
+                tip.rotation.y += Math.PI * sceneSettings.tipRotationSpeed;
+            })
 
 
             // Update controls

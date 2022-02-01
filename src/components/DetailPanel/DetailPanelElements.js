@@ -24,7 +24,7 @@ export const DetailContent = styled.div`
 
 export const DetailNav = styled.div`
     position: relative;
-    border: 2px solid green;
+    /* border: 2px solid green; */
     display: flex;
     flex-direction: row;
     width: 100%;

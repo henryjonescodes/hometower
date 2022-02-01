@@ -1,6 +1,7 @@
  //Scene settings
  export const sceneSettings = {
     rotationSpeed: .00025,
+    tipRotationSpeed: .005,
     fov:{
         widescreen: 55,
         standard: 65,
@@ -198,45 +199,45 @@
 
 export const perspecitveCameraSettings = {
     floor1:{
-        cameraPositionX: 20,
+        cameraPositionX: 0,
         cameraPositionY: 8,
-        cameraPositionZ: 20,
+        cameraPositionZ: 30,
         fov: 45,
         targetx: 0,
         targety: 10,
         targetz: 2
     },
     floor2:{
-        cameraPositionX: 20,
+        cameraPositionX: 0,
         cameraPositionY: 32,
-        cameraPositionZ: 20,
+        cameraPositionZ: 30,
         fov: 45,
         targetx: 0,
         targety: 26,
         targetz: 2
     },
     floor3:{
-        cameraPositionX: 20,
+        cameraPositionX: 0,
         cameraPositionY: 40,
-        cameraPositionZ: 20,
+        cameraPositionZ: 30,
         fov: 45,
         targetx: 0,
         targety: 34,
         targetz: 2
     },
     floor4:{
-        cameraPositionX: 20,
+        cameraPositionX: 0,
         cameraPositionY: 48,
-        cameraPositionZ: 20,
+        cameraPositionZ: 30,
         fov: 45,
         targetx: 0,
         targety: 42,
         targetz: 2
     },
     roof:{
-        cameraPositionX: 20,
+        cameraPositionX: 0,
         cameraPositionY: 53.5,
-        cameraPositionZ: 20,
+        cameraPositionZ: 30,
         fov: 45,
         targetx: 0,
         targety: 50,

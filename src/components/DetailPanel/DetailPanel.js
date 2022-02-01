@@ -12,7 +12,6 @@ const DetailPanel = ({scene, back}) => {
             setTitle(scene.content.title)
             setBody(scene.content.body)
             setExpanded(true)
-            console.log(Title, Body)
         } else {
             setExpanded(false)
         }
