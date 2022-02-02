@@ -2,10 +2,15 @@
  export const sceneSettings = {
     rotationSpeed: .00025,
     tipRotationSpeed: .005,
+    inactiveTime: 20,
+    screenWidths: {
+        standard: 1400,
+        mobile: 800,
+    },
     fov:{
-        widescreen: 55,
+        widescreen: 45,
         standard: 65,
-        mobile: 80
+        mobile: 75
     },
     animationDurations: { //Animation durations in miliseconds
         moveFloor: 2000,
@@ -14,6 +19,7 @@
         resetCamera: 2000,
         clickFocus: 2000,
         updateFov: 3000,
+        intro: 5000,
     },
     water: {
         oceanColor: 0x001e0f,
@@ -197,7 +203,7 @@
     },
 }
 
-export const perspecitveCameraSettings = {
+export const floors = {
     floor1:{
         cameraPositionX: 0,
         cameraPositionY: 8,
