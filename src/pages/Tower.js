@@ -12,7 +12,7 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 // import ScrollController from '../components/ScrollController/ScrollController';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 
-import {scenes, perspecitveCameraSettings, sceneSettings} from '../data/TowerSceneConfig'
+import {scenes, floors, sceneSettings} from '../data/TowerSceneConfig'
 import DetailPanel from '../components/DetailPanel/DetailPanel';
 
 class Tower extends React.Component{
@@ -34,7 +34,8 @@ class Tower extends React.Component{
             spinBuilding: true,
             lockAnimations: false,
             zoom: "standard",
-            zooming: false
+            zooming: true,
+            introComplete: false,
         }
         
         //Core Three.js objects
@@ -70,8 +71,9 @@ class Tower extends React.Component{
         //Setup listener data
         const mouse = new THREE.Vector2()
         const clickableObjects = []
-        const toolTips = []
+        // const toolTips = []
         let currentIntersect = null
+        let inactiveTime = 0
         const sizes = {
             width: window.innerWidth,
             height: window.innerHeight,
@@ -108,7 +110,7 @@ class Tower extends React.Component{
             }
         };
         loadingManager.onLoad = () => {
-            this.setState({loaded: true})
+            this.setState({loaded: true, inactiveTime: 0})
             if(this.verbose){
                 console.log( 'Loading complete!');
             }
@@ -156,7 +158,7 @@ class Tower extends React.Component{
 
             //Handle Clickable Objects
             if(clickable){
-                const nullMaterial = new THREE.MeshBasicMaterial({transparent: true, opacity: 0});
+                const nullMaterial = new THREE.MeshBasicMaterial({transparent: true, opacity: 0, color: 0x73fa85});
                 clickable.forEach((obj) => {
                     obj.traverse((child) => {child.material = nullMaterial});    
                     clickableObjects.push(obj);
@@ -234,9 +236,9 @@ class Tower extends React.Component{
             sizes.aspect = sizes.width/ sizes.height
             
             if(!this.setState.zooming){
-                if(sizes.width >= 1200){
+                if(sizes.width >= sceneSettings.screenWidths.standard){
                     this.setState({zoom: "widescreen"})
-                } else if (sizes.width >= 800){
+                } else if (sizes.width >= sceneSettings.screenWidths.mobile){
                     this.setState({zoom: "standard"})
                 } else {
                     this.setState({zoom: "mobile"})
@@ -261,6 +263,7 @@ class Tower extends React.Component{
         const handleMouseMove = (evt) => {
             mouse.x = evt.clientX / sizes.width * 2 - 1
             mouse.y = - (evt.clientY / sizes.height) * 2 + 1
+            inactiveTime = 0
         }
     
         const handleClick = () => {
@@ -375,6 +378,7 @@ class Tower extends React.Component{
         let floor3Group = new THREE.Group()
         let floor4Group = new THREE.Group()
         let roofGroup = new THREE.Group()
+        let titleTextGroup = new THREE.Group()
 
         //Water Texture
         const waterTexture = textureLoader.load('/textures/misc/waternormals.jpg', function ( texture ) {
@@ -382,15 +386,44 @@ class Tower extends React.Component{
         }) 
 
         //Font and Text Texture
-        let helvetica, matcapTexture
-        let fontLoadPromise = loadWithPromise('/fonts/helvetiker_regular.typeface.json',fontLoader).then(result => { helvetica = result })
-        let matcapTexturePromise = loadWithPromise('/textures/matcaps/1.png',textureLoader).then(result =>{ matcapTexture = result})
+        let matcapTexture, matcapTexture1, matcapTexture2, ralewayRegular, ralewayBold
+        let ralewayRegularPromise = loadWithPromise('/fonts/Raleway_SemiBold_Regular.json',fontLoader).then(result => { ralewayRegular = result })
+        let ralewayBoldPromise = loadWithPromise('/fonts/Raleway_ExtraBold_Regular.json',fontLoader).then(result => { ralewayBold = result })
+        let matcapTexturePromise = loadWithPromise('/textures/matcaps/12.png',textureLoader).then(result =>{ matcapTexture = result})
+        let matcapTexturePromise1 = loadWithPromise('/textures/matcaps/9.png',textureLoader).then(result =>{ matcapTexture1 = result})
+        let matcapTexturePromise2 = loadWithPromise('/textures/matcaps/12.png',textureLoader).then(result =>{ matcapTexture2 = result})
 
-        //Make Text Geometry
-        function generateText(text, font, material, size, height){
-            const out = new THREE.Group()
-            const coneGeometry = new THREE.ConeGeometry( size * 0.8, size * 1.6, 5 );
+        // //Make Text Geometry
+        // function generateToolTip(text, font, material, size, height){
+        //     const out = new THREE.Group()
+        //     const coneGeometry = new THREE.ConeGeometry( size * 0.8, size * 1.6, 5 );
 
+        //     //Generate Text and add to scene
+        //     const textGeometry = new TextGeometry(
+        //             text,
+        //             {
+        //                 font: font,
+        //                 size: size,
+        //                 height: height,
+        //                 curveSegments: 4,
+        //                 bevelEnabled: true,
+        //                 bevelThickness: 0.03,
+        //                 bevelSize: 0.02,
+        //                 bevelOffset: 0,
+        //                 bevelSegments: 5
+        //             }
+        //         )
+        //     textGeometry.computeBoundingBox()
+        //     textGeometry.center()
+        //     let textMesh = new THREE.Mesh(textGeometry, material)
+        //     let coneMesh = new THREE.Mesh(coneGeometry, material)
+        //     coneMesh.rotation.x = Math.PI
+        //     coneMesh.position.set(0,size * -1.4,0)
+        //     out.add(textMesh,coneMesh)
+        //     return out
+        // }
+
+        function generateText(text,font, material, size, height) {
             //Generate Text and add to scene
             const textGeometry = new TextGeometry(
                     text,
@@ -408,21 +441,55 @@ class Tower extends React.Component{
                 )
             textGeometry.computeBoundingBox()
             textGeometry.center()
-            let textMesh = new THREE.Mesh(textGeometry, material)
-            let coneMesh = new THREE.Mesh(coneGeometry, material)
-            coneMesh.rotation.x = Math.PI
-            coneMesh.position.set(0,size * -1.4,0)
-            out.add(textMesh,coneMesh)
-            return out
+            return new THREE.Mesh(textGeometry, material)
         }
 
-        Promise.all([fontLoadPromise, matcapTexturePromise]).then(() => {
+        Promise.all([
+            matcapTexturePromise, 
+            matcapTexturePromise1,
+            matcapTexturePromise2,
+            ralewayRegularPromise,
+            ralewayBoldPromise
+        ]).then(() => {
             const textMaterial = new THREE.MeshMatcapMaterial({ matcap: matcapTexture })
+            const textMaterial1 = new THREE.MeshMatcapMaterial({ matcap: matcapTexture1 })
+            const textMaterial2 = new THREE.MeshMatcapMaterial({ matcap: matcapTexture2 })
 
-            const toolTip = generateText("Down to Floor 4", helvetica, textMaterial, 0.5, .01)
-            toolTip.position.set(0,60,-5)
-            // toolTips.push(toolTip)
-            // roofGroup.add(toolTip)
+            const title = generateText("Henry Jones", ralewayBold, textMaterial, 3.5, .2)
+            title.position.set(0,56,0)
+
+            const subtitle = generateText("3D Artist & Software Engineer", ralewayRegular, textMaterial1, 1.3, .2)
+            subtitle.position.set(0,54,3)
+            
+            titleTextGroup.add(title,subtitle)
+
+            // if (sizes.width <= sceneSettings.screenWidths.mobile){
+            //     titleTextGroup.scale.set(.5,.5,.5)
+            //     titleTextGroup.position.set(0,27,0)
+            // }
+
+            this.scene.add(titleTextGroup)
+
+            const about = generateText("About Me", ralewayRegular, textMaterial2, 0.7, .2)
+            const about2 = generateText("About Me", ralewayRegular, textMaterial2, 0.7, .2)
+            about.position.set(0,40.6,10.095)
+            about2.position.set(0,40.6,-10.095)
+            about2.rotation.y = Math.PI
+            floor4Group.add(about, about2)
+
+            const photos = generateText("Photography", ralewayRegular, textMaterial2, 0.7, .2)
+            const photos2 = generateText("Photography", ralewayRegular, textMaterial2, 0.7, .2)
+            photos.position.set(0,33,10.095)
+            photos2.position.set(0,33,-10.095)
+            photos2.rotation.y = Math.PI
+            floor3Group.add(photos, photos2)
+
+            const threeD = generateText("3D Art", ralewayRegular, textMaterial2, 0.7, .2)
+            const threeD2 = generateText("3D Art", ralewayRegular, textMaterial2, 0.7, .2)
+            threeD.position.set(0,22.6,10.095)
+            threeD2.position.set(0,22.6,-10.095)
+            threeD2.rotation.y = Math.PI
+            floor2Group.add(threeD, threeD2)
         })
 
         //Sky Texture
@@ -464,7 +531,7 @@ class Tower extends React.Component{
             roofGroup)
         
         buildingGroup.add(floor2Group,floor3Group,floor4Group,roofGroup)
-        buildingGroup.rotation.y = Math.PI / 4;
+        // buildingGroup.rotation.y = Math.PI / 4;
 
         //Water
         const buildWater = (scene) => {
@@ -641,9 +708,9 @@ class Tower extends React.Component{
         const setupPerspectiveCamera = () => {
             this.camera = new THREE.PerspectiveCamera(sceneSettings.fov.standard, sizes.width / sizes.height, 0.1, 1000)
             this.camera.position.set(
-                perspecitveCameraSettings.roof.cameraPositionX,
-                perspecitveCameraSettings.roof.cameraPositionY,
-                perspecitveCameraSettings.roof.cameraPositionZ)
+                floors.roof.cameraPositionX,
+                floors.roof.cameraPositionY,
+                floors.roof.cameraPositionZ)
             // this.camera.updateProjectionMatrix()
             this.scene.add(this.camera)
         }
@@ -660,21 +727,13 @@ class Tower extends React.Component{
         const setupPerspectiveCamControls = () => {
             this.controls = new OrbitControls(this.camera, this.renderer.domElement)
             this.controls.target.set(
-                perspecitveCameraSettings.roof.targetx,
-                perspecitveCameraSettings.roof.targety,
-                perspecitveCameraSettings.roof.targetz)
+                floors.roof.targetx,
+                floors.roof.targety,
+                floors.roof.targetz)
             this.controls.enableDamping = false
             this.controls.enabled = false
         }
-
-        const init = () => {
-            attatchListeners()
-            setupRenderer()
-            setupPerspectiveCamera()
-            setupPerspectiveCamControls()
-        }
-
-        init()        
+     
 
         /**
          * Scene Animation Functions -------------------------------------------------------
@@ -800,14 +859,19 @@ class Tower extends React.Component{
             }
         }
 
-        function changeFloor (destination){
+        const changeFloor = (destination) => {
             const origin = new THREE.Vector3(0,0,0)
             const dest = new THREE.Vector3(0,100,0)
+            let titleOrigin = new THREE.Vector3(0,0,0)
+            if(this.state.zoom ==='mobile'){
+                titleOrigin = new THREE.Vector3(0,21,0)
+            }
             const duration = sceneSettings.animationDurations.changeFloor
             switch(destination){
                 case "floor1":
                     water.visible = false
                     moveFloor(roofGroup, dest)
+                    moveFloor(titleTextGroup, dest)
                     moveFloor(floor4Group, dest)
                     moveFloor(floor3Group, dest)
                     moveFloor(floor2Group, origin)
@@ -816,6 +880,7 @@ class Tower extends React.Component{
                 case "floor2":
                     water.visible = false
                     moveFloor(roofGroup, dest)
+                    moveFloor(titleTextGroup, dest)
                     moveFloor(floor4Group, dest)
                     moveFloor(floor3Group, dest)
                     moveFloor(floor2Group, origin)
@@ -824,6 +889,7 @@ class Tower extends React.Component{
                 case "floor3":
                     water.visible = false
                     moveFloor(roofGroup, dest)
+                    moveFloor(titleTextGroup, dest)
                     moveFloor(floor4Group, dest)
                     moveFloor(floor3Group, origin)
                     moveFloor(floor2Group, origin)
@@ -832,20 +898,25 @@ class Tower extends React.Component{
                 case "floor4":
                     water.visible = false
                     moveFloor(roofGroup, dest)
+                    moveFloor(titleTextGroup, dest)
                     moveFloor(floor4Group, origin)
                     moveFloor(floor3Group, origin)
                     moveFloor(floor2Group, origin)
                     resetCamera(destination, duration)
                     break;
                 case "roof":
+                    water.visible = true
                     moveFloor(roofGroup, origin)
+                    moveFloor(titleTextGroup, titleOrigin)
                     moveFloor(floor4Group, origin)
                     moveFloor(floor3Group, origin)
                     moveFloor(floor2Group, origin)
                     resetCamera(destination, duration)
                     break;
                 default:
+                    water.visible = true
                     moveFloor(roofGroup, origin)
+                    moveFloor(titleTextGroup, origin)
                     moveFloor(floor4Group, origin)
                     moveFloor(floor3Group, origin)
                     moveFloor(floor2Group, origin)
@@ -859,28 +930,28 @@ class Tower extends React.Component{
             this.setState({spinBuilding: true, currentScene: null})
             switch(key){
                 case "floor1":
-                    shiftCamera(perspecitveCameraSettings.floor1, this.camera, this.controls, duration)
+                    shiftCamera(floors.floor1, this.camera, this.controls, duration)
                     this.setState({currentFloor: "floor1"})
                     break;
                 case "floor2":
-                    shiftCamera(perspecitveCameraSettings.floor2, this.camera, this.controls, duration)
+                    shiftCamera(floors.floor2, this.camera, this.controls, duration)
                     moveFloor(floor2Group, origin)
                     this.setState({currentFloor: "floor2"})
                     break;
                 case "floor3":
-                    shiftCamera(perspecitveCameraSettings.floor3, this.camera, this.controls, duration)
+                    shiftCamera(floors.floor3, this.camera, this.controls, duration)
                     this.setState({currentFloor: "floor3"})
                     break;
                 case "floor4":
-                    shiftCamera(perspecitveCameraSettings.floor4, this.camera, this.controls, duration)
+                    shiftCamera(floors.floor4, this.camera, this.controls, duration)
                     this.setState({currentFloor: "floor4"})
                     break;
                 case "roof":
-                    shiftCamera(perspecitveCameraSettings.roof, this.camera, this.controls, duration)
+                    shiftCamera(floors.roof, this.camera, this.controls, duration)
                     this.setState({currentFloor: "roof"})
                     break;
                 default:
-                    shiftCamera(perspecitveCameraSettings.roof, this.camera, this.controls, duration)
+                    shiftCamera(floors.roof, this.camera, this.controls, duration)
                     this.setState({currentFloor: "roof"})
                     break;
             }
@@ -890,28 +961,62 @@ class Tower extends React.Component{
          * Animation Loop -------------------------------------------------------
          */
 
+        
+        const init = () => {
+            attatchListeners()
+            setupRenderer()
+            setupPerspectiveCamera()
+            setupPerspectiveCamControls()
+            resetCamera("floor1")
+        }
 
-        // const clock = new THREE.Clock()
-        // let previousTime = 0
+        init()   
+
+
+        const clock = new THREE.Clock()
+        let previousTime = 0
+        let lastActiveTime = clock.getElapsedTime()
         const raycaster = new THREE.Raycaster() 
 
         const tick = () =>
         {
-            // const elapsedTime = clock.getElapsedTime()
-            // const deltaTime = elapsedTime - previousTime
-            // previousTime = elapsedTime
+            const elapsedTime = clock.getElapsedTime()
+            const deltaTime = elapsedTime - previousTime
+            previousTime = elapsedTime
             TWEEN.update();
+
+            if(this.state.loaded && !this.state.introComplete){
+                resetCamera("roof", sceneSettings.animationDurations.intro)
+                this.setState({introComplete: true, zooming: true})
+                inactiveTime = 0
+                handleResize()
+            }
 
             //Water
             water.material.uniforms[ 'time' ].value += 1.0 / sceneSettings.water.timeModifier;
 
             //Move stuff 
-            if(this.state.spinBuilding && !this.state.lockAnimations){
-                buildingGroup.rotation.y += Math.PI * sceneSettings.rotationSpeed;
+            if(this.state.spinBuilding && !this.state.lockAnimations && this.state.introComplete){
+                buildingGroup.rotation.y += (100*deltaTime) * (Math.PI * sceneSettings.rotationSpeed);
             }
 
+            //Handle Inactivity
+            if(inactiveTime === 0){
+                lastActiveTime = clock.getElapsedTime()
+                clickableObjects.forEach((object) => {
+                    object.material.opacity = 0;
+                })
+            } 
+            inactiveTime = elapsedTime - lastActiveTime;
+            if (inactiveTime >= sceneSettings.inactiveTime && !this.state.currentScene){
+                clickableObjects.forEach((object) => {
+                    object.material.opacity = ((Math.sin(inactiveTime*2)/2)+0.5) * 0.7;
+                })
+            }
+
+
             //Raycasting from mouse pointer
-            if(this.camera != null && this.state.loaded){
+            if(this.camera != null && this.state.loaded && this.state.introComplete){
                 raycaster.setFromCamera(mouse,  this.camera)
 
                 let intersects = null
@@ -954,25 +1059,33 @@ class Tower extends React.Component{
                 switch(this.state.zoom){
                     case "widescreen":
                         updateFov(this.camera, sceneSettings.fov.widescreen)
+                        titleTextGroup.scale.set(1,1,1)
+                        titleTextGroup.position.set(0,0,0)
                         break
                     case "standard":
                         updateFov(this.camera, sceneSettings.fov.standard)
+                        titleTextGroup.scale.set(1,1,1)
+                        titleTextGroup.position.set(0,0,0)
                         break
                     case "mobile":
                         updateFov(this.camera, sceneSettings.fov.mobile)
+                        titleTextGroup.scale.set(.6,.7,.6)
+                        titleTextGroup.position.set(0,21,0)
                         break
                     default:
                         updateFov(this.camera, sceneSettings.fov.standard)
+                        titleTextGroup.scale.set(1,1,1)
+                        titleTextGroup.position.set(0,0,0)
                         break
                             
                 }
                 this.setState({zooming: false})
             }
 
-            // Face tips to user
-            toolTips.forEach((tip) => {
-                tip.rotation.y += Math.PI * sceneSettings.tipRotationSpeed;
-            })
+            // // Face tips to user
+            // toolTips.forEach((tip) => {
+            //     tip.rotation.y += Math.PI * sceneSettings.tipRotationSpeed;
+            // })
 
 
             // Update controls
