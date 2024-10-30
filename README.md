@@ -1,7 +1,9 @@
-# Hometower
+# [3D Portfolio](https://tower.henryjones.xyz/) 
+### Experimental 3D homepage site (2022)
 
-A homepage design for my portfolio site
+All models were custom-modeled in Blender. 
 
-Try it out yourself at this [Live Link] (work in progress).
-
-[Live Link]: <https://cocky-kalam-d4a751.netlify.app>
+## Tools: 
+- Three.js
+- React 
+- Blender
